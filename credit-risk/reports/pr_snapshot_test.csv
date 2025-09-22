@@ -1,0 +1,2 @@
+threshold,precision,recall,f1,tp,fp,tn,fn,approve_rate,approved_bad_rate
+0.015,0.0112278534780421,1.0,0.0222063770087519,64576.0,5686835.0,0.0,0.0,0.0,

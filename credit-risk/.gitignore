@@ -1,0 +1,22 @@
+# data & secrets
+data/*
+!data/.gitkeep
+mlruns/
+models/
+.env
+.DS_Store
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+.profile
+coverage/
+.cache/
+
+# notebooks
+reports/*.html
+
+# vscode
+.vscode/

@@ -1,0 +1,2 @@
+t,approve_rate,precision,recall,f1,ks,tp,fp,tn,fn
+0.015,0.0,0.011228,1.0,0.022206,0.0,64576,5686835,0,0

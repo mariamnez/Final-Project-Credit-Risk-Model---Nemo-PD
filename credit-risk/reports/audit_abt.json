@@ -1,0 +1,312 @@
+{
+  "rows": 11023652,
+  "unique_loan_id": 11023652,
+  "duplicates": 0,
+  "date_summary": {
+    "min_fp": "2017-02-01 00:00:00",
+    "max_fp": "2023-03-01 00:00:00",
+    "min_vint": "2017-01-01 00:00:00",
+    "max_vint": "2023-01-01 00:00:00",
+    "min_last": "2019-02-01 00:00:00",
+    "max_last": "2025-03-01 00:00:00",
+    "bad_rate": 0.018813003168097107,
+    "label_nulls": 0.0
+  },
+  "missing_top": [
+    {
+      "col": "orig_date",
+      "nulls": 11023652,
+      "miss_rate": 1.0
+    },
+    {
+      "col": "first_90dpd",
+      "nulls": 10650316,
+      "miss_rate": 0.9661331834495501
+    },
+    {
+      "col": "msa",
+      "nulls": 1023883,
+      "miss_rate": 0.09288056263024268
+    },
+    {
+      "col": "first_payment_date",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "fico",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "orig_rate",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "ltv",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "cltv",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "orig_upb",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "loan_id",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "channel",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "dti",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "product",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "purpose",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "property_type",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "state",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "loan_term",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "occupancy",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "num_units",
+      "nulls": 0,
+      "miss_rate": 0.0
+    },
+    {
+      "col": "seller_name",
+      "nulls": 0,
+      "miss_rate": 0.0
+    }
+  ],
+  "outlier_flags": [
+    {
+      "feature": "dti",
+      "count_flagged": 54939
+    },
+    {
+      "feature": "fico",
+      "count_flagged": 1857
+    },
+    {
+      "feature": "ltv",
+      "count_flagged": 345
+    },
+    {
+      "feature": "cltv",
+      "count_flagged": 200
+    },
+    {
+      "feature": "loan_term",
+      "count_flagged": 29
+    },
+    {
+      "feature": "orig_rate",
+      "count_flagged": 0
+    },
+    {
+      "feature": "orig_upb",
+      "count_flagged": 0
+    },
+    {
+      "feature": "num_units",
+      "count_flagged": 0
+    }
+  ],
+  "categorical_tops": {
+    "channel": [
+      {
+        "val": "R",
+        "n": 6327744
+      },
+      {
+        "val": "C",
+        "n": 3313730
+      },
+      {
+        "val": "B",
+        "n": 1382172
+      },
+      {
+        "val": "9",
+        "n": 6
+      }
+    ],
+    "purpose": [
+      {
+        "val": "P",
+        "n": 4801304
+      },
+      {
+        "val": "N",
+        "n": 3678514
+      },
+      {
+        "val": "C",
+        "n": 2543834
+      }
+    ],
+    "occupancy": [
+      {
+        "val": "P",
+        "n": 9944011
+      },
+      {
+        "val": "I",
+        "n": 686755
+      },
+      {
+        "val": "S",
+        "n": 392886
+      }
+    ],
+    "product": [
+      {
+        "val": "FRM",
+        "n": 11023652
+      }
+    ],
+    "property_type": [
+      {
+        "val": "SF",
+        "n": 7078733
+      },
+      {
+        "val": "PU",
+        "n": 3003661
+      },
+      {
+        "val": "CO",
+        "n": 863392
+      },
+      {
+        "val": "MH",
+        "n": 59301
+      },
+      {
+        "val": "CP",
+        "n": 18565
+      }
+    ],
+    "state": [
+      {
+        "val": "CA",
+        "n": 1323571
+      },
+      {
+        "val": "TX",
+        "n": 835993
+      },
+      {
+        "val": "FL",
+        "n": 761278
+      },
+      {
+        "val": "IL",
+        "n": 476869
+      },
+      {
+        "val": "OH",
+        "n": 421842
+      },
+      {
+        "val": "MI",
+        "n": 381278
+      },
+      {
+        "val": "NY",
+        "n": 363920
+      },
+      {
+        "val": "AZ",
+        "n": 356782
+      },
+      {
+        "val": "PA",
+        "n": 356012
+      },
+      {
+        "val": "GA",
+        "n": 348512
+      }
+    ],
+    "first_time_buyer": [
+      {
+        "val": "N",
+        "n": 8996370
+      },
+      {
+        "val": "Y",
+        "n": 2027277
+      },
+      {
+        "val": "9",
+        "n": 5
+      }
+    ]
+  },
+  "suspect_columns": [],
+  "columns": [
+    "loan_id",
+    "fico",
+    "first_payment_date",
+    "orig_date",
+    "orig_upb",
+    "orig_rate",
+    "ltv",
+    "cltv",
+    "dti",
+    "channel",
+    "purpose",
+    "occupancy",
+    "product",
+    "property_type",
+    "state",
+    "msa",
+    "loan_term",
+    "num_units",
+    "seller_name",
+    "servicer_name",
+    "first_time_buyer",
+    "vintage_q",
+    "window_end",
+    "last_perf_month",
+    "first_90dpd",
+    "default_within_24m"
+  ]
+}

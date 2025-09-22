@@ -1,0 +1,21 @@
+{
+  "fico": 752.0,
+  "orig_upb": 198000.0,
+  "orig_rate": 4.25,
+  "ltv": 80.0,
+  "cltv": 80.0,
+  "dti": 37.0,
+  "msa": 31084.0,
+  "loan_term": 360.0,
+  "num_units": 1.0,
+  "rate_spread_vintage": 0.0,
+  "fico_gap": 98.0,
+  "ltv_80": 0.0,
+  "ltv_90": 0.0,
+  "dti_43": 0.0,
+  "int_fico_gap_x_ltv": 7410.0,
+  "int_dti_x_ltv": 2755.0,
+  "state_te": 0.030677295198519222,
+  "channel_te": 0.03013393671649021,
+  "purpose_te": 0.03672309384358606
+}

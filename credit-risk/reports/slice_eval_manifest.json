@@ -1,0 +1,12 @@
+{
+  "preds": "C:\\Users\\maria\\credit-risk\\data\\processed\\test_predictions_calibrated.parquet",
+  "abt": "C:\\Users\\maria\\credit-risk\\data\\processed\\abt.parquet",
+  "id_col": "loan_id",
+  "used_slices": [
+    "vintage_q",
+    "state",
+    "channel",
+    "purpose"
+  ],
+  "n_rows_joined": 5751411
+}
