@@ -15,35 +15,35 @@ Pipeline covers data prep, model training (LightGBM), calibration (Platt), polic
 - **Chosen PD threshold (policy):** ≈ 0.010–0.014 (drives ~20% approvals; see `reports/policy_curve.csv`)
 
 ---
-
-## Repo layout
+## Repo Layout
 credit-risk/
-├─ data/
-│ ├─ processed/
-│ │ ├─ test_predictions.parquet
-│ │ └─ test_predictions_calibrated.parquet
-│ └─ external/ # (optional macro templates if used)
-├─ reports/
-│ ├─ metrics.json
-│ ├─ metrics_tuned.json
-│ ├─ platt_scaler.json
-│ ├─ lgbm_model_tuned.txt
-│ ├─ policy_curve.csv
-│ ├─ policy_choice.json
-│ ├─ backtest_recent_policy.csv
-│ └─ eda_*.png / .csv (auto-generated)
-├─ scripts/
-│ ├─ train_baseline_splits.py
-│ ├─ train_tuned.py # (hyperparam pass)
-│ ├─ calibrate_platt.py
-│ ├─ policy_curve.py # grid + metrics
-│ ├─ check_threshold.py
-│ ├─ backtest_recent_policy.py
-│ ├─ compute_rmse.py
-│ ├─ slice_.py # fairness/stability slices
-│ └─ make_eda_assets.py # EDA PNG + CSV for slides
-└─ streamlit_app/
-└─ app.py
+├── data/
+│   ├── processed/
+│   │   ├── test_predictions.parquet
+│   │   └── test_predictions_calibrated.parquet
+│   └── external/                 # (optional macro templates if used)
+├── reports/
+│   ├── metrics.json
+│   ├── metrics_tuned.json
+│   ├── platt_scaler.json
+│   ├── lgbm_model_tuned.txt
+│   ├── policy_curve.csv
+│   ├── policy_choice.json
+│   ├── backtest_recent_policy.csv
+│   └── eda_*.(png|csv)           # EDA assets for slides/dashboards
+├── scripts/
+│   ├── train_baseline_splits.py
+│   ├── train_tuned.py
+│   ├── calibrate_platt.py
+│   ├── policy_curve.py
+│   ├── set_policy_threshold.py
+│   ├── check_threshold.py
+│   ├── backtest_recent_policy.py
+│   ├── compute_rmse.py
+│   ├── slice_*.py                # fairness/stability slices
+│   └── make_eda_assets.py
+└── streamlit_app/
+    └── app.py
 
 
 ---
