@@ -15,7 +15,12 @@ Pipeline covers data prep, model training (LightGBM), calibration (Platt), polic
 - **Chosen PD threshold (policy):** ≈ 0.010–0.014 (drives ~20% approvals; see `reports/policy_curve.csv`)
 
 ---
+
 ## Repo Layout
+
+### Repo Layout
+
+```text
 credit-risk/
 ├── data/
 │   ├── processed/
@@ -44,6 +49,7 @@ credit-risk/
 │   └── make_eda_assets.py
 └── streamlit_app/
     └── app.py
+
 
 
 ---
