@@ -19,7 +19,6 @@ def load_policy():
     return t, prob
 
 def pick_prob_col(df, preferred):
-    # be tolerant to different column names
     candidates = [preferred, "pd_cal", "p_cal", "y_pred", "pd_raw", "p"]
     for c in candidates:
         if c in df.columns:
@@ -46,7 +45,7 @@ def main():
     df_abt   = pd.read_parquet(ABT_RECENT)
     df_pred  = pd.read_parquet(preds_path)
 
-    # Align by row order (both were produced from the same recent ABT)
+    # Align by row order
     df = pd.concat([df_abt.reset_index(drop=True), df_pred.reset_index(drop=True)], axis=1)
 
     # Pick probability column
@@ -61,7 +60,6 @@ def main():
     if has_vint:
         g = df.groupby("vintage_q", as_index=False)
     else:
-        # one-row summary if no vintage present
         g = [(None, df)]
 
     rows = []
@@ -94,7 +92,6 @@ def main():
     out.to_csv(args.out, index=False)
     print(f"Wrote -> {args.out}")
 
-    # Nicely echo a quick one-liner
     if len(out)==1:
         ar = out.iloc[0]["approve_rate"]
         print(f"approve_rate={ar:.4f}"

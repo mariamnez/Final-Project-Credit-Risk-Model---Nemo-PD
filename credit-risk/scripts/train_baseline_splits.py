@@ -21,9 +21,7 @@ from sklearn.metrics import (
     precision_recall_curve,
 )
 
-# --------------------
 # Paths & constants
-# --------------------
 ROOT = Path(".")
 DATA = ROOT / "data" / "processed"
 REPORTS = ROOT / "reports"
@@ -35,19 +33,17 @@ TEST_PQ  = DATA / "abt_test.parquet"
 MODEL_TXT = REPORTS / "lgbm_model.txt"
 METRICS_JSON = REPORTS / "metrics.json"
 FEATIMP_CSV = REPORTS / "feature_importance.csv"
-TEST_PREDS_PQ = DATA / "processed" / "test_predictions.parquet"  # keep same location
+TEST_PREDS_PQ = DATA / "processed" / "test_predictions.parquet"  
 
 ROC_PNG = REPORTS / "roc_curve.png"
 PR_PNG = REPORTS / "pr_curve.png"
 CAL_PNG = REPORTS / "calibration_curve.png"
 
-LABEL_COL = "default_within_24m"  # label in ABT
-ID_COL = "loan_id"                # if present, include in predictions
-VINTAGE_COL = "vintage_q"         # if present, include in predictions
+LABEL_COL = "default_within_24m"  
+ID_COL = "loan_id"                
+VINTAGE_COL = "vintage_q"         
 
-# --------------------
 # Utilities
-# --------------------
 def ks_stat(y_true: np.ndarray, y_prob: np.ndarray) -> float:
     """KS statistic via ROC curve (max TPR - FPR)."""
     fpr, tpr, _ = roc_curve(y_true, y_prob)
@@ -120,9 +116,7 @@ def plot_curves(y, p):
     plt.savefig(CAL_PNG, dpi=150)
     plt.close()
 
-# --------------------
 # Main
-# --------------------
 def main():
     ensure_dirs()
 
@@ -153,7 +147,7 @@ def main():
         Xva, label=yva, categorical_feature=cats, reference=dtrain, free_raw_data=False
     )
 
-    # LightGBM params (reasonable baseline)
+    # LightGBM params
     params = {
         "objective": "binary",
         "metric": "binary_logloss",
@@ -166,14 +160,14 @@ def main():
         "bagging_freq": 1,
         "verbose": -1,
         "seed": 42,
-        "num_threads": 0,  # let LGBM decide
+        "num_threads": 0,  
     }
 
     num_boost_round = 3000
     stopping_rounds = 200
     eval_period = 50
 
-    # Train with LightGBM >= 4.0 callbacks; fallback to 3.x keywords if needed
+    # Train with LightGBM
     try:
         gbm = lgb.train(
             params,
@@ -213,7 +207,6 @@ def main():
     }
     print("Test metrics:", json.dumps(metrics, indent=2))
 
-    # Save artifacts
     MODEL_TXT.parent.mkdir(parents=True, exist_ok=True)
     gbm.save_model(str(MODEL_TXT), num_iteration=best_iter)
 
@@ -229,7 +222,7 @@ def main():
     ).sort_values("gain", ascending=False)
     fi.to_csv(FEATIMP_CSV, index=False)
 
-    # Save test predictions parquet (used later by calibration scripts)
+    # Save test predictions parquet
     out_cols = {}
     if ID_COL in df_te.columns:
         out_cols[ID_COL] = df_te[ID_COL].values

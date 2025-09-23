@@ -31,7 +31,6 @@ def main():
             preds_file = cand
 
     df = pd.read_parquet(preds_file)
-    # we don’t have labels for the recent cohort
     pcol = find_prob_col(df)
     p = df[pcol].clip(0,1)
 
@@ -47,7 +46,6 @@ def main():
              .apply(lambda g: pd.Series({
                  "n": len(g),
                  "approve_rate": float(g["approve"].mean()),
-                 # we don’t have default labels here; keep overall portfolio bad rate as placeholder if present
                  "approved_bad_rate": np.nan,
                  "overall_bad_rate": float(df.get("overall_bad_rate", pd.Series(dtype=float)).mean()) if "overall_bad_rate" in df else np.nan
              }))

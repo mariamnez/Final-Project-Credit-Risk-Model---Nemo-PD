@@ -20,7 +20,6 @@ def pick_first(df, cols):
     return None
 
 def derive_months(df: pd.DataFrame) -> list[str]:
-    # 1) Try any real date column
     for c in DATE_CANDIDATES:
         if c in df.columns:
             dt = pd.to_datetime(df[c], errors="coerce")
@@ -30,7 +29,6 @@ def derive_months(df: pd.DataFrame) -> list[str]:
                 if vals:
                     return vals
 
-    # 2) Try quarter → month from vintage-like columns
     for c in ["vintage_q","orig_vintage","vintage"]:
         if c in df.columns:
             try:
@@ -42,7 +40,6 @@ def derive_months(df: pd.DataFrame) -> list[str]:
             except Exception:
                 pass
 
-    # 3) Fallback: make a sensible range for your project (adjust if needed)
     return [p.strftime("%Y-%m") for p in pd.period_range("2017-01", "2025-03", freq="M")]
 
 def main():

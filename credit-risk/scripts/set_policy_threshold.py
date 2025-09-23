@@ -32,8 +32,8 @@ def main():
 
     choice = {
         "threshold": round(t, 6),
-        "metric": "ks_constrained",   # documentation tag (we still use KS elsewhere)
-        "prob": "y_pred"              # follow the convention used by policy_curve.py
+        "metric": "ks_constrained",   
+        "prob": "y_pred"              
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(choice, indent=2))

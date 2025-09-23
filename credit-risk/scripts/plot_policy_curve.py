@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Plot policy curve (recall / precision / F1 / KS vs threshold) with approve rate on a second axis.
 - Reads a CSV produced by policy_curve.py (flexible to column names).
@@ -23,7 +22,7 @@ import matplotlib.pyplot as plt
 def _read_curve(curve_path: Path) -> pd.DataFrame:
     df = pd.read_csv(curve_path)
 
-    # Normalize common column name variants
+    # Normalize column names
     rename = {
         "ks_at_p": "ks",
         "KS": "ks",
@@ -36,21 +35,17 @@ def _read_curve(curve_path: Path) -> pd.DataFrame:
     }
     df = df.rename(columns=rename)
 
-    # Make sure required columns exist / are numeric if present
     for col in ["threshold", "precision", "recall", "f1", "ks", "approve_rate", "tp", "fp", "tn", "fn"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # If KS is missing or constant, try to compute from counts
     needs_ks = ("ks" not in df.columns) or (df["ks"].nunique(dropna=True) <= 1)
     have_counts = all(c in df.columns for c in ["tp", "fp", "tn", "fn"])
     if needs_ks and have_counts:
-        # TPR - FPR across thresholds
         tpr = df["tp"] / (df["tp"] + df["fn"]).replace(0, np.nan)
         fpr = df["fp"] / (df["fp"] + df["tn"]).replace(0, np.nan)
         df["ks"] = (tpr - fpr).clip(lower=0, upper=1).fillna(0)
 
-    # Sort by threshold ascending and drop rows without threshold
     if "threshold" in df.columns:
         df = df.dropna(subset=["threshold"]).sort_values("threshold")
         df = df.reset_index(drop=True)
@@ -65,7 +60,6 @@ def _read_choice(choice_path: Path) -> float | None:
         return None
     try:
         choice = json.loads(choice_path.read_text())
-        # accepted keys: 'threshold' or 't'
         t = choice.get("threshold", choice.get("t", None))
         return float(t) if t is not None else None
     except Exception:
@@ -89,7 +83,6 @@ def main():
     df = _read_curve(curve_path)
     t_choice = _read_choice(choice_path)
 
-    # For plotting: pick columns that exist
     y_left_series = {}
     for col in ["recall", "precision", "f1", "ks"]:
         if col in df.columns:
@@ -97,26 +90,23 @@ def main():
 
     has_approve = "approve_rate" in df.columns
 
-    # Choose a threshold to highlight
+    # threshold to highlight
     if t_choice is None:
-        # If no choice provided, highlight best KS (if present), otherwise best F1
         if "ks" in df.columns and df["ks"].notna().any():
             t_choice = float(df.loc[df["ks"].idxmax(), "threshold"])
         elif "f1" in df.columns and df["f1"].notna().any():
             t_choice = float(df.loc[df["f1"].idxmax(), "threshold"])
         else:
-            # fallback: pick median threshold
             t_choice = float(df["threshold"].median())
 
-    # Nearest row to chosen threshold
     i = (df["threshold"] - t_choice).abs().idxmin()
     pt = df.loc[i, :]
 
-    # --- Plot ---
+    # Plot
     plt.figure(figsize=(12, 6))
     ax = plt.gca()
 
-    # Left axis: recall/precision/F1/KS
+    # Left axis
     colors = {
         "recall": "tab:blue",
         "precision": "tab:orange",
@@ -137,7 +127,7 @@ def main():
     ax.set_ylim(0, 1.05)
     ax.grid(True, axis="y", alpha=0.25)
 
-    # Right axis: approve rate (if available)
+    # Right axis:
     if has_approve:
         ax2 = ax.twinx()
         ax2.plot(df["threshold"], df["approve_rate"], color="tab:blue", ls="--", lw=2, label="Approve rate")
@@ -146,10 +136,9 @@ def main():
     else:
         ax2 = None
 
-    # Vertical line at chosen threshold
     ax.axvline(t_choice, color="k", ls=":", lw=1.5, label=f"t = {t_choice:.4f}")
 
-    # Legend handling (combine both axes if needed)
+    # Legend
     handles, labels_ = ax.get_legend_handles_labels()
     if ax2 is not None:
         h2, l2 = ax2.get_legend_handles_labels()
@@ -157,7 +146,6 @@ def main():
         labels_ += l2
     ax.legend(handles, labels_, loc="upper right", ncol=2, frameon=False)
 
-    # Annotate the chosen point using recall value (or first available metric)
     y_for_marker = None
     for c in ["f1", "precision", "recall", "ks"]:
         if c in df.columns and pd.notna(pt.get(c)):
@@ -169,13 +157,11 @@ def main():
     # Title
     plt.title(args.title, pad=12)
 
-    # Save plot
     out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
     plt.savefig(out_path, dpi=160)
     plt.close()
 
-    # Snapshot at t
     cols = [c for c in ["threshold", "approve_rate", "precision", "recall", "f1", "ks", "tp", "fp", "tn", "fn"] if c in df.columns]
     snap = df.loc[[i], cols].copy()
     snap.rename(columns={

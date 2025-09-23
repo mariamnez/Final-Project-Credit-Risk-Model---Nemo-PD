@@ -17,7 +17,6 @@ plt.figure(figsize=(args.width/96, args.height/96), dpi=96)
 ax = plt.gca()
 ax.plot(df['date'], df[args.col], linewidth=2.2, color=args.color)
 
-# Minimal sparkline styling
 for spine in ax.spines.values():
     spine.set_visible(False)
 ax.set_xticks([])

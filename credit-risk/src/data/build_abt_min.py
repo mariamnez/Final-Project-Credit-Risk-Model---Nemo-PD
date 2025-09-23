@@ -41,7 +41,7 @@ def main():
     con.execute("PRAGMA enable_progress_bar=true")
 
     def load_headerless(table: str, files: list[str]):
-        # Seed schema from the FIRST file with header=false (gives column00..columnNN)
+        # Seed schema
         con.execute(
             f"""
             CREATE OR REPLACE TABLE {table} AS
@@ -49,7 +49,7 @@ def main():
             """,
             [files[0]],
         )
-        # Insert all files with header=false (consistent column0..column31)
+        # Insert all files with header=false
         for i, f in enumerate(files, 1):
             con.execute(
                 f"""
@@ -65,13 +65,7 @@ def main():
     print("Reading performance…")
     load_headerless("perf_raw", perf_files)
 
-    # ---- Normalize with INDEX fallbacks only (headerless) ----
-    # Freddie Mac "Standard" layout (0-based indices used below):
-    # ACQ: 0=CreditScore, 1=FirstPaymentDate, 2=FirstTimeHomeBuyerFlag, 4=MSA, 6=Units,
-    #      7=OccupancyStatus, 8=OriginalCLTV, 9=OriginalDTI, 10=OriginalUPB, 11=OriginalLTV,
-    #      12=OriginalInterestRate, 13=Channel, 15=ProductType, 16=PropertyState,
-    #      17=PropertyType, 19=LoanSequenceNumber, 20=LoanPurpose, 21=OriginalLoanTerm,
-    #      23=SellerName, 24=ServicerName
+  
     con.execute("""
         CREATE OR REPLACE TABLE acq AS
         SELECT
@@ -104,7 +98,7 @@ def main():
         FROM acq_raw AS t;
     """)
 
-    # PERF: 0=LoanSequenceNumber, 1=MonthlyReportingPeriod, 3=DelinquencyStatus
+    # PERF:
     con.execute("""
         CREATE OR REPLACE TABLE perf AS
         SELECT

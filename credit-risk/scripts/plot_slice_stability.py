@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 root = Path(".")
 rep = root / "reports"
 
-# --- Load slice-level metrics (already created earlier) ---
-# Expected columns in each: key, n, bad_rate, auc, pr_auc, ks
 df_state   = pd.read_csv(rep / "slice_state_top20_metrics.csv")
 df_channel = pd.read_csv(rep / "slice_channel_metrics.csv")
 df_purpose = pd.read_csv(rep / "slice_purpose_metrics.csv")
@@ -21,18 +19,15 @@ def prep_matrix(df, key_col, top=None):
     """Return (norm_values, labels, original_values) for heatmap."""
     if top:
         df = df.sort_values("n", ascending=False).head(top)
-    # sort by KS (stronger segments near top)
     df = df.sort_values("ks", ascending=False).reset_index(drop=True)
 
     original = df[metrics].copy()
     norm = original.copy()
 
-    # min-max scale KS and AUC to [0,1]
     for m in ["ks", "auc"]:
         lo, hi = original[m].min(), original[m].max()
         norm[m] = 0 if hi == lo else (original[m] - lo) / (hi - lo)
 
-    # invert bad_rate so low risk => greener (closer to 1)
     lo, hi = original["bad_rate"].min(), original["bad_rate"].max()
     br_scaled = 0 if hi == lo else (original["bad_rate"] - lo) / (hi - lo)
     norm["bad_rate"] = 1 - br_scaled
@@ -40,7 +35,6 @@ def prep_matrix(df, key_col, top=None):
     labels = df[key_col].astype(str).tolist()
     return norm.values, labels, original
 
-# --- Build the figure with 3 stacked heatmaps ---
 fig, axes = plt.subplots(3, 1, figsize=(10, 14), constrained_layout=True)
 
 panels = [
@@ -62,7 +56,6 @@ for ax, (df, key, title, top) in zip(axes, panels):
     ax.set_yticklabels(ylabels)
     ax.set_title(title)
 
-    # numeric overlays (KS/AUC in 0–1; bad rate as %)
     for i in range(len(ylabels)):
         ax.text(0, i, f"{original.iloc[i]['ks']:.3f}",  ha="center", va="center", fontsize=8)
         ax.text(1, i, f"{original.iloc[i]['auc']:.3f}", ha="center", va="center", fontsize=8)

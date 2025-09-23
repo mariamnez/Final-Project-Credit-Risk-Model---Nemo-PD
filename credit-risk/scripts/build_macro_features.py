@@ -14,7 +14,7 @@ PMMS  = EXT/"pmms_30y_rate_monthly.csv"
 def safe_read_csv(path, **kw):
     if path.exists():
         df = pd.read_csv(path, **kw)
-        for c in df.columns:  # trim col names
+        for c in df.columns:  
             df.rename(columns={c: c.strip()}, inplace=True)
         return df
     print(f"[warn] missing {path}; continuing without it")
@@ -26,20 +26,18 @@ def prep_month(s):
 
 def main():
     df = pd.read_parquet(ABT_IN)
-    # Use first_payment_date - 1M as proxy for origination month if orig_date missing
     if "orig_date" in df and df["orig_date"].notna().any():
         df["orig_month"] = prep_month(df["orig_date"])
     else:
         df["orig_month"] = prep_month(pd.to_datetime(df["first_payment_date"], errors="coerce") - pd.offsets.MonthBegin(1))
 
-    # ---- unemployment
+    # unemployment
     un = safe_read_csv(UNEMP)
     if not un.empty:
         un["date"] = un["date"].astype(str)
         df = df.merge(un.rename(columns={"date":"orig_month"}), how="left",
                       left_on=["state","orig_month"], right_on=["state","orig_month"])
 
-    # ---- HPI and 12m change by state
     hpi = safe_read_csv(HPI)
     if not hpi.empty:
         hpi["date"] = pd.to_datetime(hpi["date"])
@@ -49,7 +47,7 @@ def main():
         hpi = hpi.drop(columns=["date"])
         df = df.merge(hpi, how="left", on=["state","orig_month"])
 
-    # ---- PMMS (market rate) and rate spread
+    # PMMS (market rate) and rate spread
     pm = safe_read_csv(PMMS)
     if not pm.empty:
         pm["orig_month"] = pm["date"].astype(str)
@@ -58,7 +56,6 @@ def main():
         if "orig_rate" in df.columns:
             df["rate_spread"] = df["orig_rate"] - df["pmms_30y"]
 
-    # Select only what we added (for logging)
     added = [c for c in ["unemp_rate","hpi_index","hpi_12m_chg","pmms_30y","rate_spread"] if c in df.columns]
     print("Added cols:", added)
 

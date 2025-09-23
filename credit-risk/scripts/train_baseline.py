@@ -18,8 +18,6 @@ Baseline training script for Credit Risk PD@24m
       - policy_curve_valid_lgbm.csv
       - feature_importance_lgbm.csv
       - split_sizes.json
-
-You can tweak splits or downsampling via CLI flags; run with -h to see options.
 """
 
 from __future__ import annotations
@@ -49,7 +47,7 @@ import lightgbm as lgb
 import matplotlib.pyplot as plt
 
 
-# ----------------------- defaults & schema -----------------------
+# schema
 
 NUMERIC = [
     "fico",
@@ -74,7 +72,6 @@ CATEGORICAL = [
 
 TARGET = "default_within_24m"
 
-# Default time windows (by vintage_q)
 DEFAULT_SPLIT = dict(
     train=("2017-01-01", "2019-12-31"),
     valid=("2020-01-01", "2020-12-31"),
@@ -82,7 +79,7 @@ DEFAULT_SPLIT = dict(
 )
 
 
-# ----------------------- utilities -----------------------
+# utilities
 
 def ks_score(y_true: np.ndarray, y_prob: np.ndarray) -> float:
     """Kolmogorov–Smirnov score for binary classifier."""
@@ -101,7 +98,7 @@ def policy_curve(y_true: np.ndarray, y_prob: np.ndarray, points: int = 101) -> p
     out = []
     total_defaults = y_true.sum()
     for t in thr:
-        approve = y_prob < t  # approve if predicted PD < threshold
+        approve = y_prob < t  
         approval_rate = approve.mean()
         bad_in_approved = np.nan
         captured_default_share = np.nan
@@ -152,12 +149,11 @@ def load_split(
         if c in df.columns:
             df[c] = df[c].astype("category")
 
-    # Optional simple downsampling to keep training light
     if downsample_neg_ratio and downsample_neg_ratio > 0:
         pos = df[df[target] == 1]
         neg = df[df[target] == 0]
         take = min(len(neg), int(downsample_neg_ratio * max(1, len(pos))))
-        if take < len(neg):  # only sample if we need to
+        if take < len(neg):  
             neg = neg.sample(take, random_state=seed)
         df = pd.concat([pos, neg], axis=0).sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
@@ -169,7 +165,7 @@ def load_split(
     return X_num, X_cat, y, df
 
 
-# ----------------------- main -----------------------
+# main
 
 def main():
     parser = argparse.ArgumentParser()
@@ -195,7 +191,7 @@ def main():
 
     print("Loading splits from:", ABT)
 
-    # Train/Valid with optional downsampling; keep Test full
+    # Train/Valid
     Xtr_num, Xtr_cat, ytr, dtr = load_split(
         ABT, args.train_start, args.train_end, NUMERIC, CATEGORICAL,
         downsample_neg_ratio=(None if args.neg_ratio <= 0 else args.neg_ratio), seed=args.seed
@@ -219,7 +215,7 @@ def main():
     (RDIR / "split_sizes.json").write_text(json.dumps(split_sizes, indent=2))
     print("Split sizes:", split_sizes)
 
-    # ---------------- Logistic Regression (numeric only) ----------------
+    # Logistic Regression
     print("\nTraining Logistic Regression (numeric only)…")
     logit_pipe = Pipeline(steps=[
         ("pre", ColumnTransformer(
@@ -228,7 +224,6 @@ def main():
                     ("imp", SimpleImputer(strategy="median")),
                     ("sc", StandardScaler(with_mean=True, with_std=True))
                 ]), NUMERIC),
-                # We ignore categoricals here; this is a numeric-only baseline
             ],
             remainder="drop"
         )),
@@ -238,9 +233,8 @@ def main():
     p_va_log = logit_pipe.predict_proba(Xva_num)[:, 1]
     p_te_log = logit_pipe.predict_proba(Xte_num)[:, 1]
 
-    # ---------------- LightGBM (numeric + categorical) ----------------
+    # LightGBM
     print("Training LightGBM (numeric + categorical)…")
-    # Prepare frames with correct dtypes (categoricals as category)
     Xtr_all = pd.concat([Xtr_num.copy(), Xtr_cat.copy()], axis=1)
     Xva_all = pd.concat([Xva_num.copy(), Xva_cat.copy()], axis=1)
     Xte_all = pd.concat([Xte_num.copy(), Xte_cat.copy()], axis=1)
@@ -250,14 +244,12 @@ def main():
             Xva_all[c] = Xva_all[c].astype("category")
             Xte_all[c] = Xte_all[c].astype("category")
 
-    # Handle missing numerics (median) for LightGBM too
     for c in NUMERIC:
         med = Xtr_all[c].median()
         Xtr_all[c] = Xtr_all[c].fillna(med)
         Xva_all[c] = Xva_all[c].fillna(med)
         Xte_all[c] = Xte_all[c].fillna(med)
 
-    # LightGBM class weight via scale_pos_weight
     pos = float(ytr.sum()); neg = float(len(ytr) - ytr.sum())
     spw = (neg / pos) if pos > 0 else 1.0
 
@@ -283,7 +275,7 @@ def main():
     p_va_lgb = lgbm.predict_proba(Xva_all)[:, 1]
     p_te_lgb = lgbm.predict_proba(Xte_all)[:, 1]
 
-    # ---------------- Evaluation ----------------
+    # Eval
     def eval_block(name: str, y_true: np.ndarray, p: np.ndarray) -> dict:
         safe_brier = float(brier_score_loss(y_true, p)) if len(np.unique(y_true)) > 1 else float("nan")
         safe_logloss = float(log_loss(y_true, p, labels=[0,1])) if len(np.unique(y_true)) > 1 else float("nan")
@@ -309,7 +301,7 @@ def main():
     (Path(args.reports_dir) / "metrics.json").write_text(json.dumps(metrics, indent=2))
     print("\nMetrics:\n", json.dumps(metrics, indent=2))
 
-    # ---------------- Calibration & Policy (valid) ----------------
+    # Calibration and policy
     plt.figure()
     CalibrationDisplay.from_predictions(yva, p_va_lgb, n_bins=20)
     plt.title("Calibration — LightGBM (valid)")
@@ -320,12 +312,10 @@ def main():
     pc = policy_curve(yva, p_va_lgb)
     pc.to_csv(Path(args.reports_dir) / "policy_curve_valid_lgbm.csv", index=False)
 
-    # ---------------- Feature importance (gain) ----------------
     fi = pd.Series(lgbm.booster_.feature_importance(importance_type="gain"),
                    index=Xtr_all.columns).sort_values(ascending=False)
     fi.to_csv(Path(args.reports_dir) / "feature_importance_lgbm.csv")
 
-    # ---------------- Persist models ----------------
     dump(logit_pipe, Path(args.models_dir) / "logit_numeric.joblib")
     dump(lgbm,      Path(args.models_dir) / "lgbm_all.joblib")
     meta = dict(feature_order=list(Xtr_all.columns), categorical=CATEGORICAL)

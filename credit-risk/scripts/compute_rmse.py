@@ -10,7 +10,7 @@ def main():
                     help="If not set, auto-detect one of: pd_cal,p_cal,y_pred,pd,p,prob")
     args = ap.parse_args()
 
-    # load parquet (works with pyarrow/fastparquet if installed)
+    # load parquet
     df = pd.read_parquet(args.preds)
 
     # pick probability column

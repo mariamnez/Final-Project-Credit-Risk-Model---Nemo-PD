@@ -10,7 +10,6 @@ def main(target=0.20):
     preds_path = preds_cal if preds_cal.exists() else preds_raw
     df = pd.read_parquet(preds_path)
 
-    # find prob column
     for c in ["pd_cal","pd_platt","p_cal","prob_cal","pd","p","prob","y_pred"]:
         if c in df.columns:
             pcol = c
@@ -21,7 +20,6 @@ def main(target=0.20):
     # threshold that approves target fraction (approve if PD <= threshold)
     t = float(df[pcol].quantile(target))
 
-    # compute actual approve rate (can differ slightly due to ties)
     approve_rate = float((df[pcol] <= t).mean())
 
     choice = {

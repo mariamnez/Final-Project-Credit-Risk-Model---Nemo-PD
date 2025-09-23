@@ -48,7 +48,6 @@ def main():
     con.execute("PRAGMA enable_progress_bar=true")
 
     def load_headerless(table: str, files: list[str]):
-        # Seed with header=false so DuckDB creates zero-padded names: column00..columnNN
         con.execute(
             f"""
             CREATE OR REPLACE TABLE {table} AS
@@ -75,7 +74,7 @@ def main():
     print("Reading performance…")
     load_headerless("perf_raw", perf_files)
 
-    # ---- Map by index (zero-padded names: column00..column09, then column10..) ----
+    # Map by index
     # ACQ indices (0-based) per Freddie "Standard"
     con.execute(
         """
@@ -111,7 +110,7 @@ def main():
         """
     )
 
-    # PERF indices (0-based): 00=LoanSequenceNumber, 01=MonthlyReportingPeriod, 03=DelinqStatus
+    # PERF indices
     con.execute(
         """
         CREATE OR REPLACE TABLE perf AS
@@ -170,7 +169,6 @@ def main():
         """
     )
 
-    # Write outputs
     con.execute(f"COPY (SELECT * FROM abt) TO '{OUT.as_posix()}' (FORMAT PARQUET);")
     con.execute(
         f"COPY (SELECT * FROM abt USING SAMPLE 5000 ROWS) "

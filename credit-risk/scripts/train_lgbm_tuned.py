@@ -19,7 +19,6 @@ TEST  = DATA / "abt_test.parquet"
 LABEL = "default_within_24m"
 
 def ks_stat(y_true, p):
-    # classic KS: max separation of cumulative distributions
     df = pd.DataFrame({"y": y_true, "p": p})
     df = df.sort_values("p")
     c1 = (df["y"] == 1).cumsum() / (df["y"] == 1).sum()
@@ -31,13 +30,11 @@ def columns_to_use(df):
         LABEL, "loan_id", "first_90dpd", "first_payment_date",
         "orig_date", "vintage_q", "msa"
     }
-    # keep numeric and well-behaved categoricals; let LGBM handle NaN
     use = [c for c in df.columns if c not in drop]
     return use
 
 def build_monotone_constraints(cols):
-    # +1 means risk increases with feature, -1 decreases, 0 no constraint
-    monotone = {  # safe defaults; only apply when columns exist
+    monotone = {  
         "fico": -1,
         "dti": +1,
         "ltv": +1,
@@ -96,10 +93,10 @@ def main():
 
     # class imbalance
     pos_rate = ytr.mean() if ytr.mean() > 0 else 0.01
-    spw = (1.0 - pos_rate) / pos_rate  # ~ 88 for 1.12% bad rate
+    spw = (1.0 - pos_rate) / pos_rate  
     print(f"Train pos_rate={pos_rate:.5f}  →  scale_pos_weight≈{spw:.1f}")
 
-    # base param grid (mild)
+    # base param grid
     grid = {
         "learning_rate": [0.03, 0.05, 0.07, 0.10],
         "num_leaves": [31, 63, 95, 127],
@@ -114,7 +111,6 @@ def main():
     }
     sampler = list(ParameterSampler(grid, n_iter=30, random_state=42))
 
-    # optional monotone constraints
     mono = build_monotone_constraints(feats)
     use_mono = any(m != 0 for m in mono)
     print(f"Monotone constraints active: {use_mono}")
@@ -130,7 +126,7 @@ def main():
         else:
             print("  ", tag)
 
-    # evaluate on TEST with the best booster
+    # evaluate on TEST
     pt = best_booster.predict(Xte, num_iteration=best_booster.best_iteration)
     test_metrics = {
         "auc_roc": float(roc_auc_score(yte, pt)),
@@ -156,7 +152,6 @@ def main():
     }).sort_values("gain", ascending=False)
     fi.to_csv(RPTS / "feature_importance_tuned.csv", index=False)
 
-    # write raw TEST predictions (for calibration/PR/ROC plots)
     out = pd.DataFrame({"y_true": yte, "y_pred": pt})
     out.to_parquet(DATA / "test_predictions_tuned.parquet", index=False)
 

@@ -19,13 +19,11 @@ def show(path: str):
 
     df = pd.read_csv(path)
 
-    # Show first rows, all columns
     with pd.option_context("display.max_columns", None,
                            "display.width", 160,
                            "display.max_rows", 20):
         print(df.head(10).to_string(index=False))
 
-    # Quick numeric stats
     nums = df.select_dtypes(include="number")
     if not nums.empty:
         stats = nums.describe().T.loc[:, ["mean", "50%", "min", "max", "std"]]

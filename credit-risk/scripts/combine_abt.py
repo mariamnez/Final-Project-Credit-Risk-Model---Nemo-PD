@@ -9,7 +9,6 @@ TO 'data/processed/abt.parquet' (FORMAT PARQUET);
 """)
 print("Combined -> data/processed/abt.parquet")
 
-# quick checks
 print(con.execute("SELECT COUNT(*) AS rows FROM 'data/processed/abt.parquet'").df())
 print(con.execute("""
 SELECT vintage_q, COUNT(*) AS n,

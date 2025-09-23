@@ -9,7 +9,6 @@ DATA    = ROOT / "data" / "processed"
 REPORTS = ROOT / "reports"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
-# Most common locations/names produced earlier
 CANDIDATES = [
     DATA / "valid_predictions.parquet",
     DATA / "test_predictions.parquet",
@@ -25,7 +24,7 @@ def sigmoid(z):
 def fit_platt(x_logit, y, max_iter=200, tol=1e-6):
     """Logistic regression with intercept via Newton–Raphson on y ~ sigmoid(a + b*x)."""
     n  = x_logit.shape[0]
-    X  = np.c_[np.ones(n), x_logit]    # [1, x]
+    X  = np.c_[np.ones(n), x_logit]    
     th = np.array([0.0, 1.0], dtype=float)
 
     for _ in range(max_iter):
@@ -33,7 +32,7 @@ def fit_platt(x_logit, y, max_iter=200, tol=1e-6):
         p = sigmoid(z)
         grad = X.T @ (y - p)
         w = p * (1 - p)
-        H = -(X.T * w) @ X  # negative Hessian
+        H = -(X.T * w) @ X  
         try:
             step = np.linalg.solve(H, grad)
         except np.linalg.LinAlgError:
@@ -52,7 +51,7 @@ def pick_label(df: pd.DataFrame) -> str | None:
     for c in cols:
         if c.lower() in LABEL_PRIOR:
             return c
-    # 2) by binary-ness
+    # 2) by binary
     for c in cols:
         s = df[c].dropna()
         if s.nunique() <= 2 and set(map(float, s.unique())) <= {0.0, 1.0}:
@@ -67,7 +66,7 @@ def pick_prob(df: pd.DataFrame, ycol: str | None) -> str | None:
             continue
         if c.lower() in PROB_PRIOR:
             return c
-    # 2) by value range (mostly in [0,1], non-binary, floaty)
+    # 2) by value range
     cands = []
     for c in cols:
         if c == ycol:
@@ -78,11 +77,10 @@ def pick_prob(df: pd.DataFrame, ycol: str | None) -> str | None:
         if s.dtype.kind not in "fc":
             continue
         frac01 = (s.between(0, 1)).mean()
-        if frac01 > 0.98 and s.nunique() > 10:  # looks like a probability
+        if frac01 > 0.98 and s.nunique() > 10: 
             cands.append(c)
     if not cands:
         return None
-    # prefer names that hint probability
     cands.sort(key=lambda c: (0 if any(k in c.lower() for k in ["pred","prob","pd","p_"]) else 1, -df[c].nunique()))
     return cands[0]
 
@@ -117,7 +115,6 @@ def main():
     (REPORTS / "platt_scaler.json").write_text(json.dumps({"a": a, "b": b}, indent=2))
     print(f"Wrote scaler -> {REPORTS/'platt_scaler.json'}  (a={a:.6f}, b={b:.6f})")
 
-    # Optional sanity metrics; skip if sklearn not present
     try:
         from sklearn.metrics import brier_score_loss, roc_auc_score
         before = {

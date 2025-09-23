@@ -15,7 +15,7 @@ CAL_FILE = DATA / "test_predictions_calibrated.parquet"
 RAW_FILE = DATA / "test_predictions.parquet"
 POLICY_JSON = REPORTS / "policy_choice.json"
 
-TEST_ABT = DATA / "abt_test.parquet"   # to bring grouping columns
+TEST_ABT = DATA / "abt_test.parquet"  
 
 
 def _load_predictions():
@@ -44,7 +44,6 @@ def _join_test_features(dfp: pd.DataFrame) -> pd.DataFrame:
     keep_cols = [c for c in ["loan_id", "vintage_q", "channel", "purpose", "state", "msa"] if c in dft.columns]
     dft = dft[keep_cols].copy()
     df = dfp.merge(dft, on="loan_id", how="left")
-    # ensure vintage is datetime
     if "vintage_q" in df.columns:
         df["vintage_q"] = pd.to_datetime(df["vintage_q"])
     return df
@@ -73,25 +72,25 @@ def main():
 
     df = _join_test_features(dfp)
 
-    # ---- vintage (always if present)
+    # vintage 
     if "vintage_q" in df.columns:
         vint = _policy_metrics(df, thr, "vintage_q").sort_values("vintage_q")
         vint.to_csv(REPORTS / "policy_vintage_metrics.csv", index=False)
         print("Wrote:", REPORTS / "policy_vintage_metrics.csv")
 
-    # ---- channel
+    # channel
     if "channel" in df.columns:
         ch = _policy_metrics(df, thr, "channel").sort_values("approve_rate")
         ch.to_csv(REPORTS / "policy_channel_metrics.csv", index=False)
         print("Wrote:", REPORTS / "policy_channel_metrics.csv")
 
-    # ---- purpose
+    # purpose
     if "purpose" in df.columns:
         pu = _policy_metrics(df, thr, "purpose").sort_values("approve_rate")
         pu.to_csv(REPORTS / "policy_purpose_metrics.csv", index=False)
         print("Wrote:", REPORTS / "policy_purpose_metrics.csv")
 
-    # ---- state top 20 by volume
+    # state top 20 by volume
     if "state" in df.columns:
         vol = df["state"].value_counts().head(20).index.tolist()
         st = _policy_metrics(df[df["state"].isin(vol)], thr, "state").sort_values("approve_rate")

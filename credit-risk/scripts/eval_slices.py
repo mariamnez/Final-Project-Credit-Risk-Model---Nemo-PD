@@ -12,14 +12,13 @@ DATA = ROOT / "data" / "processed"
 REPORTS = ROOT / "reports"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
-# ---- inputs (robust fallbacks) ----
 PRED_PATHS = [
     DATA / "test_predictions_calibrated.parquet",
     DATA / "test_predictions.parquet",
 ]
 ABT_PATHS = [
-    DATA / "abt.parquet",          # full ABT (if present)
-    DATA / "abt_test.parquet",     # test-only ABT (if present)
+    DATA / "abt.parquet",          
+    DATA / "abt_test.parquet",     
 ]
 
 SLICE_CANDIDATES = ["vintage_q", "state", "channel", "purpose"]
@@ -27,10 +26,9 @@ ID_CANDIDATES = ["loan_id", "unique_loan_id", "loanid", "id"]
 
 def ks_stat(y_true: np.ndarray, y_score: np.ndarray) -> float:
     # KS = max(TPR - FPR)
-    # guard against degenerate cases
     y = np.asarray(y_true)
     s = np.asarray(y_score)
-    if y.min() == y.max():  # only one class present
+    if y.min() == y.max():  
         return np.nan
     fpr, tpr, _ = roc_curve(y, s)
     return float(np.max(tpr - fpr))
@@ -45,7 +43,6 @@ def resolve_id(df: pd.DataFrame) -> tuple[str, pd.DataFrame]:
     for c in ID_CANDIDATES:
         if c in df.columns:
             return c, df
-    # synthesize a row id if nothing exists
     df = df.reset_index(drop=True)
     df["row_id"] = np.arange(len(df), dtype=np.int64)
     return "row_id", df
@@ -92,10 +89,8 @@ def main():
     preds = pd.read_parquet(pred_path)
     abt = pd.read_parquet(abt_path)
 
-    # Identify id columns and slice columns that exist
     id_col_preds, preds = resolve_id(preds)
     id_col_abt, abt = resolve_id(abt)
-    # If ids differ, align names for merge
     if id_col_preds != id_col_abt:
         preds = preds.rename(columns={id_col_preds: id_col_abt})
         id_col = id_col_abt
@@ -107,11 +102,10 @@ def main():
         raise ValueError("No slice columns found in ABT. "
                          f"Looked for: {SLICE_CANDIDATES}")
 
-    # keep only needed meta cols
     keep_cols = [id_col] + have_slices
     meta = abt.loc[:, keep_cols].copy()
 
-    # predictions columns (robust): prefer calibrated col names
+    # predictions columns
     prob_cols_pref = ["y_pred_cal", "pd_cal", "pd_platt", "p_cal", "prob_cal",
                       "y_pred", "pd", "p", "prob"]
     pcol = next((c for c in prob_cols_pref if c in preds.columns), None)
@@ -126,10 +120,8 @@ def main():
     df = preds[[id_col, ycol, pcol]].copy()
     df = df.rename(columns={ycol: "y_true", pcol: "y_pred"})
 
-    # Join meta for slicing
     df = df.merge(meta, on=id_col, how="left")
 
-    # Compute and write each slice table that exists
     if "vintage_q" in have_slices:
         vint = compute_slice_metrics(df, "vintage_q")
         vint.to_csv(REPORTS / "slice_vintage_metrics.csv", index=False)
@@ -146,7 +138,6 @@ def main():
         pu = compute_slice_metrics(df, "purpose")
         pu.to_csv(REPORTS / "slice_purpose_metrics.csv", index=False)
 
-    # small manifest for debugging
     manifest = {
         "preds": str(pred_path),
         "abt": str(abt_path),

@@ -7,18 +7,15 @@ def sparkline(csv, value_col, date_col, out, color="#2F80ED", smooth=3, target=N
     df[date_col] = pd.to_datetime(df[date_col])
     df = df.sort_values(date_col)
 
-    # optional smoothing (moving average)
     v = df[value_col].rolling(smooth, min_periods=1).mean() if smooth and smooth > 1 else df[value_col]
 
-    fig, ax = plt.subplots(figsize=(2.4, 0.7), dpi=300)  # ~720x210 px
+    fig, ax = plt.subplots(figsize=(2.4, 0.7), dpi=300)  
     ax.plot(df[date_col], v, linewidth=2, color=color)
-    ax.scatter([df[date_col].iloc[-1]], [v.iloc[-1]], s=10, color=color)  # last-point dot
+    ax.scatter([df[date_col].iloc[-1]], [v.iloc[-1]], s=10, color=color)  
 
-    # Optional target/reference line (e.g., KS guardrail)
     if target is not None:
         ax.axhline(target, lw=1, ls="--", color=color, alpha=0.4)
 
-    # Minimal sparkline look
     for sp in ax.spines.values():
         sp.set_visible(False)
     ax.set_xticks([]); ax.set_yticks([])

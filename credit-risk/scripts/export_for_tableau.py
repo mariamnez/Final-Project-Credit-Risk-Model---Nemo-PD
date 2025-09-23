@@ -5,7 +5,7 @@ root = Path(".")
 outd = root / "data" / "processed" / "exports"
 outd.mkdir(parents=True, exist_ok=True)
 
-# 1) Policy choice (threshold + which prob column was used)
+# 1) Policy choice
 policy = json.loads((root/"reports"/"policy_choice.json").read_text())
 t = float(policy["threshold"])
 prob_hint = policy.get("prob", "y_pred_cal")  # 'y_pred' | 'y_pred_cal' | 'pd_cal'
@@ -28,7 +28,7 @@ df_recent = df_recent[keep_recent].rename(columns={pcol_recent:"pd"})
 df_recent["decision_at_t"] = (df_recent["pd"] <= t).astype(int)
 df_recent.to_csv(outd/"recent_predictions_for_tableau.csv", index=False)
 
-# 4) Already-built artifacts: copy to exports for one place to point Tableau
+# 4) Artifacts
 artifacts = [
     ("reports/policy_curve.csv", "policy_curve.csv"),
     ("reports/backtest_recent_policy.csv", "backtest_recent_policy.csv"),
@@ -43,7 +43,6 @@ for src, dst in artifacts:
     if p.exists():
         pd.read_csv(p).to_csv(outd/dst, index=False)
 
-# 5) Tiny summary for the deck
 summary = {
     "threshold": t,
     "metric": policy.get("metric","(see policy_choice.json)"),

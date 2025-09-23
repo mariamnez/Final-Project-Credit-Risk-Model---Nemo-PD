@@ -19,13 +19,10 @@ Y_COLS   = ["y_true", "y", "label"]
 
 def parse_grid(spec: str | None) -> np.ndarray:
     if not spec:
-        # sensible default: 0.01 .. 0.25 step 0.005
         return np.arange(0.01, 0.251, 0.005)
     if ":" in spec:
         a, b, s = map(float, spec.split(":"))
-        # inclusive stop
         return np.arange(a, b + 1e-12, s)
-    # comma list
     return np.array([float(x) for x in spec.split(",")], dtype=float)
 
 def find_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
@@ -35,8 +32,7 @@ def find_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
     return None
 
 def ks_stat(y_true: np.ndarray, score: np.ndarray) -> float:
-    # score is PD; higher = riskier; standard KS
-    from scipy.stats import ks_2samp  # if not installed, we can do CDFs manually
+    from scipy.stats import ks_2samp  
     return float(ks_2samp(score[y_true == 1], score[y_true == 0]).statistic)
 
 def main():
@@ -51,7 +47,6 @@ def main():
                     help="Optional path to a predictions parquet.")
     args = ap.parse_args()
 
-    # locate predictions file
     pred_path = Path(args.preds) if args.preds else next((p for p in PRED_DEFAULTS if p.exists()), None)
     if pred_path is None:
         raise FileNotFoundError(
@@ -63,12 +58,10 @@ def main():
     if not ycol:
         raise ValueError(f"Could not find label column in {pred_path}. Checked {Y_COLS}")
 
-    # choose probability column
     pcol = None
     if args.use_calibrated:
         pcol = find_col(df, CAL_COLS) or find_col(df, RAW_COLS)
     else:
-        # prefer calibrated if present, otherwise raw
         pcol = find_col(df, CAL_COLS) or find_col(df, RAW_COLS)
     if not pcol:
         raise ValueError(f"Could not find probability column. "
@@ -80,11 +73,9 @@ def main():
 
     rows = []
     for t in grid:
-        # Business rule: approve if PD <= t (low risk)
         approve = (p <= t)
         approve_rate = float(approve.mean())
 
-        # For classification metrics, predicting default if PD >= t
         yhat_bad = (p >= t).astype(int)
 
         tp = int(((y == 1) & (yhat_bad == 1)).sum())

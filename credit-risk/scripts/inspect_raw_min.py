@@ -3,7 +3,6 @@ from pathlib import Path
 import duckdb
 import sys
 
-# --- paths ---
 ROOT = Path(__file__).resolve().parents[1]
 ACQ  = ROOT / "data" / "raw" / "acq"
 PERF = ROOT / "data" / "raw" / "perf"
@@ -24,7 +23,6 @@ def union_columns(files, header: bool):
         return []
     con = duckdb.connect(":memory:")
     header_sql = "true" if header else "false"
-    # read_csv_auto will sniff types & delimiter; we only vary header=True/False
     df0 = con.execute(
         f"SELECT * FROM read_csv_auto(?, union_by_name=true, header={header_sql}, sample_size=20000) LIMIT 0",
         [list(map(str, files))]
@@ -59,7 +57,6 @@ def main():
     print("acq :", guess_delim(acq_head))
     print("perf:", guess_delim(perf_head))
 
-    # show unioned columns with header=True and header=False
     acq_cols_h  = union_columns(acq_files, header=True)
     perf_cols_h = union_columns(perf_files, header=True)
     acq_cols_nh  = union_columns(acq_files, header=False)
@@ -73,7 +70,6 @@ def main():
     print("acq :", acq_cols_nh[:10], ("... total " + str(len(acq_cols_nh))) if len(acq_cols_nh) > 10 else "")
     print("perf:", perf_cols_nh[:10], ("... total " + str(len(perf_cols_nh))) if len(perf_cols_nh) > 10 else "")
 
-    # simple recommendation
     acq_header = looks_like_named_cols(acq_cols_h)
     perf_header = looks_like_named_cols(perf_cols_h)
     print("\n-- recommendation --")

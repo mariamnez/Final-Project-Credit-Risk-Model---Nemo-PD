@@ -7,14 +7,12 @@ import lightgbm as lgb
 import shap
 import streamlit as st
 
-# ---------- Paths ----------
 ROOT = Path(__file__).resolve().parent
 MODEL_PATH = ROOT / "reports" / "lgbm_model_tuned.txt"
-SCALER_PATH = ROOT / "reports" / "platt_scaler.json"        # optional
+SCALER_PATH = ROOT / "reports" / "platt_scaler.json"        
 POLICY_PATH = ROOT / "reports" / "policy_choice.json"
-MEDIANS_PATH = ROOT / "reports" / "feature_medians.json"    # used to fill defaults
+MEDIANS_PATH = ROOT / "reports" / "feature_medians.json"    
 
-# ---------- Load artifacts ----------
 @st.cache_resource(show_spinner=False)
 def load_model():
     booster = lgb.Booster(model_file=str(MODEL_PATH))
@@ -29,13 +27,12 @@ def load_json(p: Path, default=None):
         return default
 
 booster, FEATURE_ORDER = load_model()
-platt = load_json(SCALER_PATH, default=None)  # {"a":..., "b":...} or None
+platt = load_json(SCALER_PATH, default=None)  
 policy = load_json(POLICY_PATH, default={"threshold": 0.01})
 medians = load_json(MEDIANS_PATH, default={})
 
 THRESHOLD = float(policy.get("threshold", 0.01))
 
-# ---------- Helpers ----------
 def sigmoid(x): 
     return 1.0 / (1.0 + np.exp(-x))
 
@@ -49,11 +46,11 @@ def apply_platt(p_raw: np.ndarray, params: dict | None):
         return p_raw
     a = float(params.get("a", 0.0))
     b = float(params.get("b", 1.0))
-    mode = params.get("mode", "logit")  # "logit" (default) or "linear"
+    mode = params.get("mode", "logit")  
     p = np.clip(p_raw, 1e-6, 1 - 1e-6)
     if mode == "linear":
         z = a + b * p
-    else:  # "logit"
+    else:  
         z = a + b * np.log(p / (1 - p))
     return sigmoid(z)
 
@@ -62,16 +59,14 @@ def set_one_hot(row_dict: dict, feature_prefix: str, choice_code: str):
     If model has one-hot columns like purpose_P, purpose_C..., set chosen one to 1, others 0.
     If model has a single categorical code column (e.g., 'purpose'), we put the raw code.
     """
-    # one-hots present?
     one_hot_cols = [c for c in FEATURE_ORDER if c.startswith(feature_prefix + "_")]
     if one_hot_cols:
         for c in one_hot_cols:
             row_dict[c] = 1.0 if c.endswith("_" + choice_code) else 0.0
     elif feature_prefix in FEATURE_ORDER:
-        row_dict[feature_prefix] = choice_code  # LightGBM can accept string cats if trained that way
+        row_dict[feature_prefix] = choice_code  
 
 def compute_engineered(row_dict: dict):
-    # Compute common engineered fields if the model expects them
     if "fico" in FEATURE_ORDER:
         fico = float(row_dict["fico"])
     elif "credit_score" in FEATURE_ORDER:
@@ -80,27 +75,22 @@ def compute_engineered(row_dict: dict):
     else:
         fico = float(row_dict.get("fico", medians.get("fico", 740)))
 
-    # gap and interaction often used in your model
     if "fico_gap" in FEATURE_ORDER:
         row_dict["fico_gap"] = 850.0 - fico
     if "int_fico_gap_x_ltv" in FEATURE_ORDER:
         ltv = float(row_dict.get("ltv", row_dict.get("cltv", medians.get("ltv", 80))))
         row_dict["int_fico_gap_x_ltv"] = (850.0 - fico) * ltv
 
-    # If model expects cltv and we only gathered ltv, mirror it
     if "cltv" in FEATURE_ORDER and "cltv" not in row_dict:
         row_dict["cltv"] = float(row_dict.get("ltv", medians.get("cltv", medians.get("ltv", 80.0))))
 
 def build_feature_row(user_inputs: dict) -> pd.DataFrame:
-    # start from medians for robustness
     row = {k: medians.get(k, 0.0) for k in FEATURE_ORDER}
 
-    # numeric direct mappings if present in the model
     for key, val in user_inputs.items():
         if key in FEATURE_ORDER:
             row[key] = val
 
-    # Support common numeric names used in your project
     if "fico" in user_inputs and "fico" in FEATURE_ORDER:
         row["fico"] = user_inputs["fico"]
     if "dti" in user_inputs and "dti" in FEATURE_ORDER:
@@ -110,28 +100,23 @@ def build_feature_row(user_inputs: dict) -> pd.DataFrame:
     if "orig_rate" in FEATURE_ORDER and "orig_rate" in user_inputs:
         row["orig_rate"] = user_inputs["orig_rate"]
 
-    # Set one-hots / cat codes if those columns exist
     set_one_hot(row, "purpose", user_inputs["purpose_code"])
     set_one_hot(row, "channel", user_inputs["channel_code"])
     set_one_hot(row, "occupancy", user_inputs["occ_code"])
-    # Property type & state if one-hotted in the model
     set_one_hot(row, "property_type", user_inputs["prop_code"])
     set_one_hot(row, "state", user_inputs["state_code"])
 
-    # Add engineered columns if required
     compute_engineered(row)
 
-    # Ensure column order matches the model
     X = pd.DataFrame([[row.get(f, 0.0) for f in FEATURE_ORDER]], columns=FEATURE_ORDER)
     return X
 
 def score_pd(X: pd.DataFrame) -> float:
-    # LightGBM returns probability for class=1 (default)
     p_raw = booster.predict(X, raw_score=False).astype(float)[0]
     p_cal = float(apply_platt(np.array([p_raw]), platt)[0])
     return p_cal
 
-# ---------- UI ----------
+# UI
 st.set_page_config(page_title="Credit Risk Demo", page_icon="✅", layout="centered")
 
 st.title("Credit Eligibility Demo")
@@ -153,7 +138,6 @@ with st.form("inputs"):
 
     submitted = st.form_submit_button("Check my eligibility")
 
-# map UI choices to the short codes often used in your features
 state_code_map = {
     "California":"CA","Texas":"TX","Florida":"FL","New York":"NY","Illinois":"IL","Ohio":"OH","Georgia":"GA","Pennsylvania":"PA",
     "New Jersey":"NJ","Arizona":"AZ","Virginia":"VA","North Carolina":"NC","Washington":"WA","Colorado":"CO","Tennessee":"TN",
@@ -177,7 +161,7 @@ if submitted:
         "prop_code": prop_code_map[prop],
     }
     X = build_feature_row(user)
-    pd_hat = score_pd(X)  # calibrated PD
+    pd_hat = score_pd(X)  
     approve = pd_hat <= THRESHOLD
 
     st.subheader("Result")
@@ -192,7 +176,6 @@ if submitted:
         else:
             st.error("❌ **Declined** (PD > threshold)")
 
-    # Explain top drivers with SHAP (optional, single row)
     try:
         explainer = shap.TreeExplainer(booster)
         shap_vals = explainer.shap_values(X)[1] if isinstance(explainer.shap_values(X), list) else explainer.shap_values(X)

@@ -21,7 +21,7 @@ def ensure_slice_columns(df_pred: pd.DataFrame) -> pd.DataFrame:
     """If no slice columns exist in df_pred, try to augment from ABT_RECENT."""
     have = [c for c in SLICE_CANDIDATES if c in df_pred.columns]
     if have:
-        return df_pred  # already good
+        return df_pred 
 
     if not ABT_RECENT.exists():
         print(f"[warn] No slice cols in predictions and {ABT_RECENT} not found. "
@@ -30,17 +30,14 @@ def ensure_slice_columns(df_pred: pd.DataFrame) -> pd.DataFrame:
 
     df_abt = pd.read_parquet(ABT_RECENT, columns=["loan_id", *SLICE_CANDIDATES] if "loan_id" in df_pred.columns or "loan_id" in df_abt.columns else SLICE_CANDIDATES)
 
-    # Prefer merge on loan_id if available
     if "loan_id" in df_pred.columns and "loan_id" in df_abt.columns:
         df_merged = df_pred.merge(df_abt[["loan_id", *[c for c in SLICE_CANDIDATES if c in df_abt.columns]]],
                                   on="loan_id", how="left", validate="one_to_one")
         return df_merged
 
-    # Otherwise, align by index (only if lengths match)
     if len(df_pred) == len(df_abt):
         df_pred = df_pred.reset_index(drop=True)
         df_abt = df_abt.reset_index(drop=True)
-        # bring over whichever candidates exist in ABT
         for c in SLICE_CANDIDATES:
             if c in df_abt.columns and c not in df_pred.columns:
                 df_pred[c] = df_abt[c]
@@ -55,7 +52,6 @@ def main():
     t, prob_col = load_policy()
 
     df = pd.read_parquet(PRED)
-    # use first available probability column if policy key isn't found
     if prob_col not in df.columns:
         prob_col = next((c for c in ["pd_cal", "p_cal", "pd", "p", "y_pred"] if c in df.columns), None)
         if not prob_col:
@@ -64,11 +60,9 @@ def main():
     df = ensure_slice_columns(df)
     slices = [c for c in SLICE_CANDIDATES if c in df.columns]
 
-    # Compute approved flag
     df = df.assign(approved=(df[prob_col] <= t))
 
     if not slices:
-        # Fallback: just write a global row so we never crash
         out = pd.DataFrame([{
             "slice": "GLOBAL",
             "approve_rate": float(df["approved"].mean()),
@@ -79,7 +73,6 @@ def main():
         print(out)
         return
 
-    # Group and write
     out = (df.groupby(slices, dropna=False)["approved"]
              .agg(["mean", "count"])
              .rename(columns={"mean": "approve_rate", "count": "n"})

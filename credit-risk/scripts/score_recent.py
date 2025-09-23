@@ -30,14 +30,11 @@ def main():
     booster = lgb.Booster(model_file=str(MODEL_TXT))
     feat = booster.feature_name()
 
-    # Keep *exactly* model features, in order
     X = df.reindex(columns=feat)
 
-    # Coerce all to numeric; non-numeric becomes NaN
     for c in X.columns:
         X[c] = pd.to_numeric(X[c], errors="coerce")
 
-    # Fill missing by medians when available, otherwise 0
     for c in X.columns:
         if c in medians and medians[c] is not None:
             X[c] = X[c].fillna(medians[c])
@@ -50,7 +47,6 @@ def main():
     out = pd.DataFrame({
         "pd_raw": preds.astype(float)
     })
-    # Optional: keep a key to join back (if present)
     for k in ("loan_id", "orig_date", "msa"):
         if k in df.columns and k not in out.columns:
             out[k] = df[k].values

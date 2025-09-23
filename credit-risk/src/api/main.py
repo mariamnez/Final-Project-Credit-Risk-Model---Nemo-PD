@@ -15,5 +15,5 @@ def health():
 
 @app.post("/score")
 def score(loan: Loan):
-    # TODO: load model, preprocess, return pd and risk band
+    # TODO: 
     return {"pd": 0.0123, "risk_band": "C", "explain": ["FICO", "LTV", "DTI"]}

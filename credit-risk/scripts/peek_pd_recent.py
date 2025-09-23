@@ -6,7 +6,6 @@ RECENT = Path(r"data/processed/recent_predictions_calibrated.parquet")
 
 df = pd.read_parquet(RECENT)
 
-# pick the probability column (prefer calibrated)
 candidates = ["pd_cal", "p_cal", "y_pred", "pd", "p"]
 prob_col = next(c for c in candidates if c in df.columns)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -25,7 +24,6 @@ def read_curve(path: Path) -> pd.DataFrame:
             df[c] = pd.to_numeric(df[c], errors="coerce")
     df = df.dropna(subset=["threshold"]).sort_values("threshold").reset_index(drop=True)
 
-    # Rebuild KS if missing/flat and counts exist
     if ("ks" not in df.columns) or (df["ks"].nunique(dropna=True) <= 1):
         if all(c in df.columns for c in ["tp","fp","tn","fn"]):
             tpr = df["tp"] / (df["tp"] + df["fn"]).replace(0, np.nan)
@@ -49,28 +47,25 @@ def main():
     if t is None and "ks" in df.columns and df["ks"].notna().any():
         t = float(df.loc[df["ks"].idxmax(),"threshold"])
 
-    # Keep just the useful columns
     keep = ["threshold","recall","precision","f1","ks","approve_rate"]
     keep = [k for k in keep if k in df.columns]
     df = df[keep].copy()
 
-    # Optional window around t so x labels aren’t crowded
     if t is not None:
-        span = 0.06  # +/- 0.03 around t
+        span = 0.06  
         df = df[(df["threshold"] >= t - span/2) & (df["threshold"] <= t + span/2)]
 
-    # Wide format (one row per threshold)
+    # Wide format
     df_wide = df.copy().round(6)
     df_wide.to_csv(OUT_WIDE, index=False)
 
-    # Long format (best for Canva multi-series line)
+    # Long format
     value_cols = [c for c in ["recall","precision","f1","ks"] if c in df.columns]
     df_long = df.melt(id_vars=["threshold"], value_vars=value_cols,
                       var_name="metric", value_name="value").dropna()
     df_long = df_long.sort_values(["metric","threshold"]).round(6)
     df_long.to_csv(OUT_LONG, index=False)
 
-    # Separate approve_rate for its own chart
     if "approve_rate" in df.columns:
         df[["threshold","approve_rate"]].round(6).to_csv(OUT_APPROVE, index=False)
 

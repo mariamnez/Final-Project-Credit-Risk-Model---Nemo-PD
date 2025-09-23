@@ -28,13 +28,11 @@ def main():
     df = pd.read_csv(src)
     df.columns = [c.strip().lower().replace(' ', '_') for c in df.columns]
 
-    # Pick a time column (adjust order if your file uses a different name)
     for c in ('vintage','vintage_q','present','month','period','date'):
         if c in df.columns:
             datecol = c
             break
     else:
-        # fallback to first column
         datecol = df.columns[0]
 
     df['date'] = df[datecol].map(to_date)
@@ -50,7 +48,6 @@ def main():
         s.to_csv(dst, index=False)
         print(f'Wrote: {dst}')
 
-    # Map possible column names -> output names
     candidates = [
         ('auc_roc', 'auc'),
         ('auc', 'auc'),
